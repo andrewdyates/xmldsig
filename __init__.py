@@ -54,11 +54,6 @@ References
 
 import hashlib
 import re
-# change to string literal
-import os.path
-
-# change to python string insertion
-from google.appengine.ext.webapp import template
 
 
 RX_ROOT = re.compile('<[^> ]+ ?([^>]*)>')
@@ -74,11 +69,19 @@ SIGNATURE = os.path.join(PATH, "templates/signature.xml")
 # SHA1 digest with ASN.1 BER SHA1 algorithm designator prefix [RSA-SHA1]
 PREFIX = '\x30\x21\x30\x09\x06\x05\x2B\x0E\x03\x02\x1A\x05\x00\x04\x14'
 
-PTN_SIGNEDINFO_XML = \
-'<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#"{% if xmlns_attr %} {% endif %}{{ xmlns_attr }}><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments"></CanonicalizationMethod><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod><DigestValue>{{ digest_value }}</DigestValue></Reference></SignedInfo>'
+# Pattern Map:
+#   xmlns_attr: xml name space definition attributes including ' ' prefix
+#   digest_value: padded hash of message in base64
+PTN_SIGNED_INFO_XML = \
+'<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#"%(xmlns_attr)s><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments"></CanonicalizationMethod><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod><DigestValue>%(digest_value)s</DigestValue></Reference></SignedInfo>'
 
+# Pattern Map:
+#   signed_info_xml: <SignedInfo> bytestring xml
+#   signature_value: computed signature from <SignedInfo> in base64
+#   modulus: signing RSA key modulus in base64 
+#   exponent: signing RSA key exponent in base64
 PTN_SIGNATURE_XML = \
-'<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">{{ signed_info_xml }}<SignatureValue>{{ signature_value }}</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>{{ modulus }}</Modulus><Exponent>{{ exponent }}</Exponent></RSAKeyValue></KeyValue></KeyInfo></Signature>'
+'<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">%(signed_info_xml)s<SignatureValue>%(signature_value)s</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>%(modulus)s</Modulus><Exponent>%(exponent)s</Exponent></RSAKeyValue></KeyValue></KeyInfo></Signature>'
 
 b64e = lambda s: s.encode('base64').strip() 
 b64d = lambda s: s.decode('base64').strip() 
@@ -98,17 +101,16 @@ def sign(xml, f_private, modulus, exponent):
   signed_info_xml = _signed_info(xml)
   signed = _signed_value(signed_info_xml, len(modulus))
   signature_value = f_private(signed)
-  
-  signature_cxt = {
+
+  signature_xml = PTN_SIGNATURE_XML % {
     'signed_info_xml': signed_info_xml,
     'signature_value': b64e(signature_value),
     'modulus': b64e(modulus),
     'exponent': b64e(exponent),
   }
-  signature_xml = template.render(SIGNATURE, signature_cxt)
-
   # insert xmldsig after first '>' in message
   signed_xml = xml.replace('>', '>'+signature_xml, 1)
+  
   return signed_xml
 
 
@@ -172,11 +174,14 @@ def _signed_info(xml):
   Returns:
     str: xml bytestring of <SignedInfo> computed from `xml`
   """
-  signed_info_cxt = {
-    'xmlns_attr': _get_xmlns_prefixes(xml),
+  xmlns_attr = _get_xmlns_prefixes(xml)
+  if xmlns_attr:
+    ' %s' % xmlns_attr
+
+  signed_info_xml = PTN_SIGNED_INFO_XML % {
+    'xmlns_attr': xmlns_attr,
     'digest_value': b64e(_digest(xml)),
   }
-  signed_info_xml = template.render(SIGNED_INFO, signed_info_cxt)
   return signed_info_xml
 
 
