@@ -1,8 +1,35 @@
 xmldsig
-Sign and verify digital signatures in native Python with RSA
+Sign and verify RSA-SHA1 XML Digital Signatures in native Python.
 
 Copyright © 2010 Andrew D. Yates
 All Rights Reserved
 
-Working Version 0
+http://github.com/andrewdyates/xmldsig
+git@github.com:andrewdyates/xmldsig.git
 
+Version 1
+
+xmldsig is cryptographic key implementation agnostic.  xmldsig is not
+a complete implementation of http://www.w3.org/2000/09/xmldsig. See
+module documentation for details.
+
+===
+
+Example:
+
+>>> signed_xml = xmldsig.sign(xml, f_private, mod, exp)
+... is_verified = xmldsig.verify(signed_xml, f_public, mod)
+
+See test.py for sample use.
+
+Commentary:
+
+XMLDSIG is a ridiculous but necessary protocol for identification and
+authentication in computer systems. Why is XMLDSIG ridiculous? The
+defining feature of XML is that its exact bytestring of the message is
+arbitrary. The defining feature of a cryptographic signature is that
+the exact bytestring of the message is critical. Only by what I can
+imagine to be some "practical man's" increasingly pathetic sophistry
+to assert himself over the ideas which he derides as "of no practical
+importance" could two such elegant ideas be so crudely forced together
+and then ---with so much energy--- propped, pushed, and defended.

@@ -7,17 +7,9 @@
 xmldsig is a minimal implementation of bytestring cryptographic
 digital signatures which I have written to handle the Google
 Application Single Sign On service in Security Assertion Markup
-Language. (Google Apps, SSO, SAML respectively). 
+Language. (Google Apps, SSO, SAML respectively).
 
-XMLDSIG is a ridiculous but necessary protocol for identification and
-authentication in computer systems. Why is XMLDSIG ridiculous? The
-defining feature of XML is that its exact bytestring of the message is
-arbitrary. The defining feature of a cryptographic signature is that
-the exact bytestring of the message is critical. Only by what I can
-imagine to be some "practical man's" increasingly pathetic sophistry
-to assert himself over the ideas which he derides as "of no practical
-importance" could two such elegant ideas be so crudely forced together
-and then ---with so much energy--- propped, pushed, and defended.
+See "test.py" for example.
 
 In this module, all XML must be in Bytestring XML Format:
 
@@ -62,10 +54,6 @@ RX_SIGNATURE = re.compile('<Signature.*?</Signature>')
 RX_SIGNED_INFO = re.compile('<SignedInfo.*?</SignedInfo>')
 RX_SIG_VALUE = re.compile('<SignatureValue[^>]*>([^>]+)</SignatureValue>')
 
-PATH = os.path.dirname(os.path.abspath(__file__))
-SIGNED_INFO = os.path.join(PATH, "templates/signed_info.xml")
-SIGNATURE = os.path.join(PATH, "templates/signature.xml")
-
 # SHA1 digest with ASN.1 BER SHA1 algorithm designator prefix [RSA-SHA1]
 PREFIX = '\x30\x21\x30\x09\x06\x05\x2B\x0E\x03\x02\x1A\x05\x00\x04\x14'
 
@@ -83,8 +71,8 @@ PTN_SIGNED_INFO_XML = \
 PTN_SIGNATURE_XML = \
 '<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">%(signed_info_xml)s<SignatureValue>%(signature_value)s</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>%(modulus)s</Modulus><Exponent>%(exponent)s</Exponent></RSAKeyValue></KeyValue></KeyInfo></Signature>'
 
-b64e = lambda s: s.encode('base64').strip() 
-b64d = lambda s: s.decode('base64').strip() 
+b64e = lambda s: s.encode('base64').replace('\n', '') 
+b64d = lambda s: s.decode('base64').replace('\n', '')
 
 
 def sign(xml, f_private, modulus, exponent):
@@ -115,7 +103,7 @@ def sign(xml, f_private, modulus, exponent):
 
 
 def verify(xml, f_public, modulus):
-  """Return if <Signature> in `xml` matches `xml` with `key`.
+  """Return if <Signature> is valid for `xml`
   
   Args:
     xml: str of XML with xmldsig <Signature> element
@@ -124,18 +112,19 @@ def verify(xml, f_public, modulus):
   Returns:
     bool: signature for `xml` is valid
   """
-  signature = RX_SIGNATURE.search(xml).group(0)
-  unsigned_xml = xml.replace(signature, '')
+  signature_xml = RX_SIGNATURE.search(xml).group(0)
+  unsigned_xml = xml.replace(signature_xml, '')
   
-  # retreive the signed value in `xml` using `key`
-  signature_value = RX_SIG_VALUE.search(signature).group(1)
+  # compute the given signed value
+  signature_value = RX_SIG_VALUE.search(signature_xml).group(1)
   expected = f_public(b64d(signature_value))
   
-  # compute the actual signed value for `xml`
+  # compute the actual signed value
   signed_info_xml = _signed_info(unsigned_xml)
   actual = _signed_value(signed_info_xml, len(modulus))
-  
-  return expected == actual
+
+  is_verified = expected == actual
+  return is_verified
 
 
 def _digest(data):
@@ -176,7 +165,7 @@ def _signed_info(xml):
   """
   xmlns_attr = _get_xmlns_prefixes(xml)
   if xmlns_attr:
-    ' %s' % xmlns_attr
+    xmlns_attr = ' %s' % xmlns_attr
 
   signed_info_xml = PTN_SIGNED_INFO_XML % {
     'xmlns_attr': xmlns_attr,
@@ -194,7 +183,7 @@ def _signed_value(data, key_size):
   
   Args:
     data: str of bytes to sign
-    key_size: int of number of bytes in crytographic key
+    key_size: int of key length; => len(`data`) + 3
   Returns:
     str: rsa-sha1 signature value of `data`
   """
@@ -207,4 +196,3 @@ def _signed_value(data, key_size):
   padded_digest = pad + asn_digest
 
   return padded_digest
-
