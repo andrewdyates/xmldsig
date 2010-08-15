@@ -25,7 +25,7 @@ def main():
   signed_xml = top.sign(xml, private, mod, exp)
   is_verified = top.verify(signed_xml, public, mod)
   
-  assert(is_verified)
+  assert is_verified
 
   
 if __name__ == '__main__':

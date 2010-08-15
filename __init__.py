@@ -98,7 +98,6 @@ def sign(xml, f_private, modulus, exponent):
   }
   # insert xmldsig after first '>' in message
   signed_xml = xml.replace('>', '>'+signature_xml, 1)
-  
   return signed_xml
 
 
