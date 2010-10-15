@@ -3,8 +3,6 @@
 # Copyright © 2010 Andrew D. Yates
 # All Rights Reserved
 """Sanity test for xmldsig."""
-___authors__ = '"Andrew D. Yates" <andrew.yates@hhmds.com>'
-
 
 import __init__ as top
 
