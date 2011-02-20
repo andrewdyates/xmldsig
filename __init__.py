@@ -80,9 +80,9 @@ def sign(xml, f_private, modulus, exponent):
 
   Args:
     xml: str of bytestring xml to sign
-    f_private: func 
-    modulus: str
-    exponent: str
+    f_private: func of RSA key private function
+    modulus: str from RSA key in bytes
+    exponent: str from RSA key in bytes
   Returns:
     str: signed bytestring xml
   """
@@ -106,8 +106,8 @@ def verify(xml, f_public, modulus):
   
   Args:
     xml: str of XML with xmldsig <Signature> element
-    f_public: func
-    modulus: str
+    f_public: func from RSA key public function
+    modulus: str from RSA key modulus in bytes
   Returns:
     bool: signature for `xml` is valid
   """
