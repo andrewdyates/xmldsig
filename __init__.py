@@ -5,11 +5,9 @@
 """XMLDSig: Sign and Verify XML digital cryptographic signatures.
 
 xmldsig is a minimal implementation of bytestring cryptographic
-digital signatures which I have written to handle the Google
+xml digital signatures which I have written to handle the Google
 Application Single Sign On service in Security Assertion Markup
 Language. (Google Apps, SSO, SAML respectively).
-
-See "test.py" for example.
 
 In this module, all XML must be in Bytestring XML Format:
 
@@ -66,26 +64,26 @@ PTN_SIGNED_INFO_XML = \
 # Pattern Map:
 #   signed_info_xml: str <SignedInfo> bytestring xml
 #   signature_value: str computed signature from <SignedInfo> in base64
-#   signature_id: str in form `Id="STRING" ` (trailing space required) or ""
 #   key_info_xml: str <KeyInfo> bytestring xml of signing key information
+#   signature_id: str in form `Id="VALUE" ` (trailing space required) or ""
 PTN_SIGNATURE_XML = \
 '<Signature %(signature_id)sxmlns="http://www.w3.org/2000/09/xmldsig#">%(signed_info_xml)s<SignatureValue>%(signature_value)s</SignatureValue>%(key_info_xml)s</Signature>'
 
 # Pattern Map:
 #   modulus: str signing RSA key modulus in base64 
 #   exponent: str signing RSA key exponent in base64
-PTN_PUBLIC_RSA_KEY = \
+PTN_KEY_INFO_RSA_KEY = \
 '<KeyInfo><KeyValue><RSAKeyValue><Modulus>%(modulus)s</Modulus><Exponent>%(exponent)s</Exponent></RSAKeyValue></KeyValue></KeyInfo>'
 
 # Pattern Map:
 #   cert_b64: str of X509 encryption certificate in base64
 #   subject_name_xml: str <X509SubjectName> bytstring xml or ""
-PTN_X509_CERT = \
+PTN_KEY_INFO_X509_CERT = \
 '<KeyInfo><X509Data>%(subject_name_xml)s<X509Certificate>%(cert_b64)s</X509Certificate></X509Data></KeyInfo>'
 
 # Pattern Map:
 #   subject_name: str of <SubjectName> value
-PTN_X509SubjectName = \
+PTN_X509_SUBJECT_NAME = \
 '<X509SubjectName>%(subject_name)s</X509SubjectName>'
 
 
@@ -93,39 +91,45 @@ b64e = lambda s: s.encode('base64').replace('\n', '')
 b64d = lambda s: s.decode('base64').replace('\n', '')
 
 
-def sign(xml, f_private, modulus, exponent):
+def sign(xml, f_private, key_info_xml, key_size, sig_id_value=None):
   """Return xmldsig XML string from xml_string of XML.
 
   Args:
     xml: str of bytestring xml to sign
     f_private: func of RSA key private function
-    modulus: str from RSA key in bytes
-    exponent: str from RSA key in bytes
+    key_size: int of RSA key modulus size; i.e. len(modulus)
+    key_info_xml: str of <KeyInfo> bytestring xml including public key
+    sig_id_value: str of signature id value
   Returns:
     str: signed bytestring xml
   """
   signed_info_xml = _signed_info(xml)
-  signed = _signed_value(signed_info_xml, len(modulus))
+  signed = _signed_value(signed_info_xml, key_size)
   signature_value = f_private(signed)
+  
+  if sig_id_value is None:
+    signature_id = ""
+  else:
+    signature_id = 'Id="%s" ' % sig_id_value
 
   signature_xml = PTN_SIGNATURE_XML % {
     'signed_info_xml': signed_info_xml,
     'signature_value': b64e(signature_value),
-    'modulus': b64e(modulus),
-    'exponent': b64e(exponent),
+    'key_info_xml': key_info_xml,
+    'signature_id': signature_id,
   }
   # insert xmldsig after first '>' in message
   signed_xml = xml.replace('>', '>'+signature_xml, 1)
   return signed_xml
 
 
-def verify(xml, f_public, modulus):
+def verify(xml, f_public, key_size):
   """Return if <Signature> is valid for `xml`
   
   Args:
     xml: str of XML with xmldsig <Signature> element
     f_public: func from RSA key public function
-    modulus: str from RSA key modulus in bytes
+    key_size: int of RSA key modulus size; i.e. len(modulus)
   Returns:
     bool: signature for `xml` is valid
   """
@@ -138,11 +142,47 @@ def verify(xml, f_public, modulus):
   
   # compute the actual signed value
   signed_info_xml = _signed_info(unsigned_xml)
-  actual = _signed_value(signed_info_xml, len(modulus))
+  actual = _signed_value(signed_info_xml, key_size)
 
-  is_verified = expected == actual
+  is_verified = (expected == actual)
   return is_verified
 
+
+def key_info_xml_rsa(modulus, exponent):
+  """Return <KeyInfo> xml bytestring using raw public RSA key.
+
+  Args:
+    modulus: str of bytes
+    exponent: str of bytes
+  Returns:
+    str of bytestring xml
+  """
+  xml = PTN_KEY_INFO_RSA_KEY % {
+    'modulus': b64e(modulus),
+    'exponent': b64e(exponent),
+    }
+  return xml
+
+
+def key_info_xml_cert(cert_b64, subject_name=None):
+  """Return <KeyInfo> xml bytestring using RSA X509 certificate.
+
+  Args:
+    cert_b64: str of certificate contents in base64
+    subject_name: str of value of <X509SubjectName> or None
+  """
+  if subject_name is None:
+    subject_name_xml = ""
+  else:
+    subject_name_xml = PTN_X509_SUBJECT_NAME % {
+      'subject_name': subject_name,
+      }
+  xml = PTN_KEY_INFO_X509_CERT % {
+    'cert_b64': cert_b64,
+    'subject_name': subject_name_xml,
+    }
+  return xml
+  
 
 def _digest(data):
   """SHA1 hash digest of message data.

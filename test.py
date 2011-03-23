@@ -1,10 +1,13 @@
 #!/usr/bin/python2.5
 # -*- coding: utf-8 -*-
-# Copyright © 2010 Andrew D. Yates
+# Copyright © 2011 Andrew D. Yates
 # All Rights Reserved
 """Sanity test for xmldsig."""
 
 import __init__ as top
+
+
+KEY_SIZE = 128
 
 
 def main():
@@ -17,11 +20,15 @@ def main():
   private = public = lambda x: x
   
   xml = '<samlp:Response xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="123"></samlp:Response>'
-  mod = '\x00'*128
+  mod = '\x00' * KEY_SIZE
   exp = '\x03'
+  key_info = top.PTN_KEY_INFO_RSA_KEY % {
+    'modulus': top.b64e(mod),
+    'exponent': top.b64e(exp),
+    }
   
-  signed_xml = top.sign(xml, private, mod, exp)
-  is_verified = top.verify(signed_xml, public, mod)
+  signed_xml = top.sign(xml, private, key_info, KEY_SIZE)
+  is_verified = top.verify(signed_xml, public, KEY_SIZE)
   
   assert is_verified
 
