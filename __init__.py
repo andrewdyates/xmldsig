@@ -97,7 +97,7 @@ def sign(xml, f_private, key_info_xml, key_size, sig_id_value=None):
   Args:
     xml: str of bytestring xml to sign
     f_private: func of RSA key private function
-    key_size: int of RSA key modulus size; i.e. len(modulus)
+    key_size: int of RSA key modulus size; i.e. len(modulus) > 0
     key_info_xml: str of <KeyInfo> bytestring xml including public key
     sig_id_value: str of signature id value
   Returns:
@@ -129,7 +129,7 @@ def verify(xml, f_public, key_size):
   Args:
     xml: str of XML with xmldsig <Signature> element
     f_public: func from RSA key public function
-    key_size: int of RSA key modulus size; i.e. len(modulus)
+    key_size: int of RSA key modulus size; i.e. len(modulus) > 0
   Returns:
     bool: signature for `xml` is valid
   """
@@ -179,7 +179,7 @@ def key_info_xml_cert(cert_b64, subject_name=None):
       }
   xml = PTN_KEY_INFO_X509_CERT % {
     'cert_b64': cert_b64,
-    'subject_name': subject_name_xml,
+    'subject_name_xml': subject_name_xml,
     }
   return xml
   
