@@ -1,6 +1,6 @@
 #!/usr/bin/python2.5
 # -*- coding: utf-8 -*-
-# Copyright © 2010 Andrew D. Yates
+# Copyright © 2011 Andrew D. Yates
 # All Rights Reserved
 """XMLDSig: Sign and Verify XML digital cryptographic signatures.
 
@@ -64,12 +64,30 @@ PTN_SIGNED_INFO_XML = \
 '<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#"%(xmlns_attr)s><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments"></CanonicalizationMethod><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod><DigestValue>%(digest_value)s</DigestValue></Reference></SignedInfo>'
 
 # Pattern Map:
-#   signed_info_xml: <SignedInfo> bytestring xml
-#   signature_value: computed signature from <SignedInfo> in base64
-#   modulus: signing RSA key modulus in base64 
-#   exponent: signing RSA key exponent in base64
+#   signed_info_xml: str <SignedInfo> bytestring xml
+#   signature_value: str computed signature from <SignedInfo> in base64
+#   signature_id: str in form `Id="STRING" ` (trailing space required) or ""
+#   key_info_xml: str <KeyInfo> bytestring xml of signing key information
 PTN_SIGNATURE_XML = \
-'<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">%(signed_info_xml)s<SignatureValue>%(signature_value)s</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>%(modulus)s</Modulus><Exponent>%(exponent)s</Exponent></RSAKeyValue></KeyValue></KeyInfo></Signature>'
+'<Signature %(signature_id)sxmlns="http://www.w3.org/2000/09/xmldsig#">%(signed_info_xml)s<SignatureValue>%(signature_value)s</SignatureValue>%(key_info_xml)s</Signature>'
+
+# Pattern Map:
+#   modulus: str signing RSA key modulus in base64 
+#   exponent: str signing RSA key exponent in base64
+PTN_PUBLIC_RSA_KEY = \
+'<KeyInfo><KeyValue><RSAKeyValue><Modulus>%(modulus)s</Modulus><Exponent>%(exponent)s</Exponent></RSAKeyValue></KeyValue></KeyInfo>'
+
+# Pattern Map:
+#   cert_b64: str of X509 encryption certificate in base64
+#   subject_name_xml: str <X509SubjectName> bytstring xml or ""
+PTN_X509_CERT = \
+'<KeyInfo><X509Data>%(subject_name_xml)s<X509Certificate>%(cert_b64)s</X509Certificate></X509Data></KeyInfo>'
+
+# Pattern Map:
+#   subject_name: str of <SubjectName> value
+PTN_X509SubjectName = \
+'<X509SubjectName>%(subject_name)s</X509SubjectName>'
+
 
 b64e = lambda s: s.encode('base64').replace('\n', '') 
 b64d = lambda s: s.decode('base64').replace('\n', '')
