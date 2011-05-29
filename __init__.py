@@ -44,7 +44,7 @@ References
 
 import hashlib
 import re
-
+import int_to_bytes as itb
 
 RX_ROOT = re.compile('<[^> ]+ ?([^>]*)>')
 RX_NS = re.compile('xmlns:[^> ]+')
@@ -87,9 +87,12 @@ PTN_X509_SUBJECT_NAME = \
 '<X509SubjectName>%(subject_name)s</X509SubjectName>'
 
 
-b64e = lambda s: s.encode('base64').replace('\n', '') 
 b64d = lambda s: s.decode('base64').replace('\n', '')
 
+def b64e(s):
+  if type(s) == long or type(s) == int:
+    s = itb.int_to_bytes(s)
+  return s.encode('base64').replace('\n', '')
 
 def sign(xml, f_private, key_info_xml, key_size, sig_id_value=None):
   """Return xmldsig XML string from xml_string of XML.
@@ -97,7 +100,7 @@ def sign(xml, f_private, key_info_xml, key_size, sig_id_value=None):
   Args:
     xml: str of bytestring xml to sign
     f_private: func of RSA key private function
-    key_size: int of RSA key modulus size; i.e. len(modulus) > 0
+    key_size: int of RSA key modulus size in bits (usually 128, 256, 1024, 2048, etc.)
     key_info_xml: str of <KeyInfo> bytestring xml including public key
     sig_id_value: str of signature id value
   Returns:
@@ -240,14 +243,15 @@ def _signed_value(data, key_size):
   
   Args:
     data: str of bytes to sign
-    key_size: int of key length; => len(`data`) + 3
+    key_size: int of key length in bits; => len(`data`) + 3
   Returns:
     str: rsa-sha1 signature value of `data`
   """
   asn_digest = PREFIX + _digest(data)
   
   # Pad to "one octet shorter than the RSA modulus" [RSA-SHA1]
-  padded_size = key_size - 1
+  # WARNING: key size is in bits, not bytes!
+  padded_size = key_size/8 - 1
   pad_size = padded_size - len(asn_digest) - 2
   pad = '\x01' + '\xFF' * pad_size + '\x00'
   padded_digest = pad + asn_digest
