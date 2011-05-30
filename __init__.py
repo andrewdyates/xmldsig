@@ -87,10 +87,10 @@ PTN_X509_SUBJECT_NAME = \
 '<X509SubjectName>%(subject_name)s</X509SubjectName>'
 
 
-b64d = lambda s: s.decode('base64').replace('\n', '')
+b64d = lambda s: s.decode('base64')
 
 def b64e(s):
-  if type(s) == long or type(s) == int:
+  if type(s) in (int, long):
     s = itb.int_to_bytes(s)
   return s.encode('base64').replace('\n', '')
 
@@ -121,6 +121,7 @@ def sign(xml, f_private, key_info_xml, key_size, sig_id_value=None):
     'key_info_xml': key_info_xml,
     'signature_id': signature_id,
   }
+  
   # insert xmldsig after first '>' in message
   signed_xml = xml.replace('>', '>'+signature_xml, 1)
   return signed_xml
@@ -132,7 +133,7 @@ def verify(xml, f_public, key_size):
   Args:
     xml: str of XML with xmldsig <Signature> element
     f_public: func from RSA key public function
-    key_size: int of RSA key modulus size; i.e. len(modulus) > 0
+    key_size: int of RSA key modulus size in bits
   Returns:
     bool: signature for `xml` is valid
   """
@@ -141,7 +142,7 @@ def verify(xml, f_public, key_size):
   
   # compute the given signed value
   signature_value = RX_SIG_VALUE.search(signature_xml).group(1)
-  expected = f_public(b64d(signature_value))
+  expected = f_public(b64d(signature_value))[0]
   
   # compute the actual signed value
   signed_info_xml = _signed_info(unsigned_xml)
