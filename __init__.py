@@ -142,7 +142,7 @@ def verify(xml, f_public, key_size):
   
   # compute the given signed value
   signature_value = RX_SIG_VALUE.search(signature_xml).group(1)
-  expected = f_public(b64d(signature_value))[0]
+  expected = f_public(b64d(signature_value))
   
   # compute the actual signed value
   signed_info_xml = _signed_info(unsigned_xml)

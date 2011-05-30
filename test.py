@@ -8,11 +8,12 @@ import unittest
 import __init__ as top
 
 
+# in bits
 KEY_SIZE = 128
 XML = '<samlp:Response xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="123"></samlp:Response>'
 
 # trivial public key (values not used in encryption)
-MOD = '\x00' * KEY_SIZE
+MOD = '\x00' * (KEY_SIZE / 8)
 EXP = '\x03'
 
 # obviously fake certificate encoding
@@ -28,7 +29,7 @@ SIG_ID = "DUMMY ID 123"
 
 # expected values for tests
 EXP_KEY_INFO_XML_RSA = \
-"<KeyInfo><KeyValue><RSAKeyValue><Modulus>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</Modulus><Exponent>Aw==</Exponent></RSAKeyValue></KeyValue></KeyInfo>"
+"<KeyInfo><KeyValue><RSAKeyValue><Modulus>AAAAAAAAAAAAAAAAAAAAAA==</Modulus><Exponent>Aw==</Exponent></RSAKeyValue></KeyValue></KeyInfo>"
 EXP_KEY_INFO_XML_CERT = \
 "<KeyInfo><X509Data><X509SubjectName>DUMMY SUBJECT</X509SubjectName><X509Certificate>ABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCD</X509Certificate></X509Data></KeyInfo>"
 EXP_KEY_INFO_XML_CERT_NO_SUBJECT = \
@@ -65,15 +66,10 @@ class TestTrivialKeys(unittest.TestCase):
       top.sign(XML, private_f, KEY_INFO_XML, KEY_SIZE, sig_id_value=SIG_ID)
     self.assertEqual(signed_xml, EXP_SIGNED_XML_WITH_ID)
 
-  # FIX THIS TEST
   def test_verify(self):
     signed_xml = top.sign(XML, private_f, KEY_INFO_XML, KEY_SIZE)
-    #signed_xml = EXP_SIGNED_XML
-    print "???"
-    print signed_xml == EXP_SIGNED_XML
-    print "???"
     is_verified = top.verify(signed_xml, public_f, KEY_SIZE)
-    #self.assertTrue(is_verified)
+    self.assertTrue(is_verified)
 
 class TestB64(unittest.TestCase):
 
