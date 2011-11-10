@@ -37,17 +37,3 @@ RSA, to use xmldsig in practice. A working example of xmldsig using
 RSA can be found in my github repository at
 http://github.com/andrewdyates
 
-=================================
-
-UNNECESSARY COMMENTARY
-----------------------
-
-XMLDSIG is a ridiculous but necessary protocol for identification and
-authentication in computer systems. Why is XMLDSIG ridiculous? The
-defining feature of XML is that its exact bytestring of the message is
-arbitrary. The defining feature of a cryptographic signature is that
-the exact bytestring of the message is critical. Only by what I can
-imagine to be some "practical man's" increasingly pathetic sophistry
-to assert himself over the ideas which he derides as "of no practical
-importance" could two such elegant ideas be so crudely forced together
-and then ---with so much energy--- propped, pushed, and defended.
