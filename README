@@ -2,6 +2,18 @@ xmldsig
 Sign and verify RSA-SHA1 XML Digital Signatures in native Python.
 Version 2
 
+
+CLOSELY RELATED PROJECTS
+------------------------
+"Integration example to cryptographically sign Common Alerting Protocol (CAP) XML documents"
+https://github.com/andrewdyates/cap_rsa_xmldsig
+
+"Handle OpenSSL PEM RSA keys and x509 certificates in native Python."
+https://github.com/andrewdyates/rsa_x509_pem
+
+
+=========================
+
 Copyright © 2011 Andrew D. Yates
 All Rights Reserved
 
